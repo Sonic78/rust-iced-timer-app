@@ -1,9 +1,16 @@
 use iced::widget::{button, column, container, row, text};
-use iced::{Alignment, Application, Command, Element, Length, Settings};
+use iced::{Alignment, Application, Command, Element, Length, Settings, theme};
 use std::time::Instant;
 
 fn main() -> iced::Result {
-    TimerApp::run(Settings::default())
+    let settings = Settings {
+        window: iced::window::Settings {
+            size: (330, 280),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    TimerApp::run(settings)
 }
 
 struct TimerApp {
@@ -91,19 +98,22 @@ impl Application for TimerApp {
 
         let start_button = button("Start")
             .on_press(Message::Start)
-            .padding(10);
+            .padding(10)
+            .style(theme::Button::Secondary);
 
         let stop_button = button("Stop")
             .on_press(Message::Stop)
-            .padding(10);
+            .padding(10)
+            .style(theme::Button::Secondary);
 
         let reset_button = button("Reset")
             .on_press(Message::Reset)
-            .padding(10);
+            .padding(10)
+            .style(theme::Button::Secondary);
 
         let controls = row![start_button, stop_button, reset_button]
             .spacing(10)
-            .padding(20)
+            .padding(10)
             .align_items(Alignment::Center);
 
         let content = column![time_display, controls]
@@ -112,8 +122,8 @@ impl Application for TimerApp {
             .padding(20);
 
         container(content)
-            .width(Length::Fill)
-            .height(Length::Fill)
+            .width(Length::Shrink)
+            .height(Length::Shrink)
             .center_x()
             .center_y()
             .into()
