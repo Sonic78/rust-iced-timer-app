@@ -1,33 +1,130 @@
-use iced::widget::text;
-use iced::{Element, Sandbox};
+use iced::widget::{button, column, container, row, text};
+use iced::{Alignment, Application, Command, Element, Length, Settings};
+use std::time::Instant;
 
 fn main() -> iced::Result {
-    TimerApp::run(iced::Settings::default())
+    TimerApp::run(Settings::default())
 }
 
-struct TimerApp;
+struct TimerApp {
+    elapsed_time: std::time::Duration,
+    is_running: bool,
+    start_time: Option<Instant>,
+    paused_time: std::time::Duration,
+}
 
-#[derive(Debug)]
-enum Message {}
+#[derive(Debug, Clone)]
+enum Message {
+    Start,
+    Stop,
+    Reset,
+    Tick,
+}
 
-impl Sandbox for TimerApp {
+impl Application for TimerApp {
     type Message = Message;
+    type Executor = iced::executor::Default;
+    type Theme = iced::Theme;
+    type Flags = ();
 
-    fn new() -> Self {
-        Self
+    fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
+        (
+            TimerApp {
+                elapsed_time: std::time::Duration::from_secs(0),
+                is_running: false,
+                start_time: None,
+                paused_time: std::time::Duration::from_secs(0),
+            },
+            Command::none(),
+        )
     }
 
     fn title(&self) -> String {
-        String::from("Cool Iced Timer")
+        String::from("Timer")
     }
 
-    fn update(&mut self, message: Message) {
+    fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            // Handle messages here
+            Message::Start => {
+                if !self.is_running {
+                    self.is_running = true;
+                    self.start_time = Some(Instant::now());
+                }
+            }
+            Message::Stop => {
+                if self.is_running {
+                    self.is_running = false;
+                    // Update elapsed time to the final value
+                    if let Some(start) = self.start_time {
+                        self.paused_time += start.elapsed();
+                        self.elapsed_time = self.paused_time;
+                    }
+                    self.start_time = None;
+                }
+            }
+            Message::Reset => {
+                self.is_running = false;
+                self.elapsed_time = std::time::Duration::from_secs(0);
+                self.paused_time = std::time::Duration::from_secs(0);
+                self.start_time = None;
+            }
+            Message::Tick => {
+                if self.is_running {
+                    if let Some(start) = self.start_time {
+                        self.elapsed_time = self.paused_time + start.elapsed();
+                    }
+                }
+            }
         }
+        Command::none()
     }
 
     fn view(&self) -> Element<'_, Message> {
-        text("Hello, world!").into()
-    }    
+        let minutes = self.elapsed_time.as_secs() / 60;
+        let seconds = self.elapsed_time.as_secs() % 60;
+        let display = format!("{:02}:{:02}", minutes, seconds);
+
+        let time_display = container(text(display).size(80))
+            .center_x()
+            .center_y()
+            .padding(20);
+
+        let start_button = button("Start")
+            .on_press(Message::Start)
+            .padding(10);
+
+        let stop_button = button("Stop")
+            .on_press(Message::Stop)
+            .padding(10);
+
+        let reset_button = button("Reset")
+            .on_press(Message::Reset)
+            .padding(10);
+
+        let controls = row![start_button, stop_button, reset_button]
+            .spacing(10)
+            .padding(20)
+            .align_items(Alignment::Center);
+
+        let content = column![time_display, controls]
+            .spacing(20)
+            .align_items(Alignment::Center)
+            .padding(20);
+
+        container(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x()
+            .center_y()
+            .into()
+    }
+
+    fn subscription(&self) -> iced::Subscription<Message> {
+        if self.is_running {
+            iced::time::every(std::time::Duration::from_millis(100))
+                .map(|_| Message::Tick)
+        } else {
+            iced::Subscription::none()
+        }
+    }
 }
