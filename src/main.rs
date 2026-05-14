@@ -1,11 +1,12 @@
 use iced::widget::{button, column, container, row, text};
 use iced::{Alignment, Application, Command, Element, Length, Settings, theme};
+use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
 fn main() -> iced::Result {
     let settings = Settings {
         window: iced::window::Settings {
-            size: (330, 280),
+            size: (320, 280),
             resizable: false,
             ..Default::default()
         },
@@ -14,11 +15,32 @@ fn main() -> iced::Result {
     TimerApp::run(settings)
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    timer: TimerConfig,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct TimerConfig {
+    red_text_limit_seconds: u64,
+}
+
+fn load_config() -> Config {
+    let config_str = std::fs::read_to_string("config.toml")
+        .unwrap_or_else(|_| String::from("[timer]\nred_text_limit_seconds = 120"));
+    toml::from_str(&config_str).unwrap_or_else(|_| Config {
+        timer: TimerConfig {
+            red_text_limit_seconds: 120,
+        },
+    })
+}
+
 struct TimerApp {
     elapsed_time: std::time::Duration,
     is_running: bool,
     start_time: Option<Instant>,
     paused_time: std::time::Duration,
+    limit_for_red_color_in_seconds: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -36,19 +58,21 @@ impl Application for TimerApp {
     type Flags = ();
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
+        let config = load_config();
         (
             TimerApp {
                 elapsed_time: std::time::Duration::from_secs(0),
                 is_running: false,
                 start_time: None,
                 paused_time: std::time::Duration::from_secs(0),
+                limit_for_red_color_in_seconds: config.timer.red_text_limit_seconds,
             },
             Command::none(),
         )
     }
 
     fn title(&self) -> String {
-        String::from("Timer")
+        String::from("Timer Application")
     }
 
     fn update(&mut self, message: Message) -> Command<Message> {
@@ -92,7 +116,13 @@ impl Application for TimerApp {
         let seconds = self.elapsed_time.as_secs() % 60;
         let display = format!("{:02}:{:02}", minutes, seconds);
 
-        let time_display = container(text(display).size(80))
+        let time_text = if self.elapsed_time.as_secs() >= self.limit_for_red_color_in_seconds {
+            text(display).size(80).style(iced::Color::from_rgb(1.0, 0.0, 0.0))
+        } else {
+            text(display).size(80).style(iced::Color::from_rgb(0.0, 0.0, 0.0))
+        };
+
+        let time_display = container(time_text)
             .center_x()
             .center_y()
             .padding(20);

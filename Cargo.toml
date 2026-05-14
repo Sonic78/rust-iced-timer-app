@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 iced = { git = "https://github.com/iced-rs/iced.git", rev = "refs/tags/text-editor" }
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }
