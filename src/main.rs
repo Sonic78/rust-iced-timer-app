@@ -6,6 +6,7 @@ fn main() -> iced::Result {
     let settings = Settings {
         window: iced::window::Settings {
             size: (330, 280),
+            resizable: false,
             ..Default::default()
         },
         ..Default::default()
