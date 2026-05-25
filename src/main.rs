@@ -7,8 +7,8 @@ use timer_ui::TimerApp;
 fn main() -> iced::Result {
     let settings = Settings {
         window: iced::window::Settings {
-            size: (320, 280),
-            resizable: false,
+            size: (400, 360),
+            resizable: true,
             ..Default::default()
         },
         ..Default::default()

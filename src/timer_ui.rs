@@ -1,5 +1,5 @@
 use iced::widget::{button, column, container, row, text};
-use iced::{Alignment, Application, Command, Element, Length, theme};
+use iced::{Alignment, Application, Color, Command, Element, Length, Theme, theme};
 use std::time::Instant;
 
 use crate::timer_cfg::load_config;
@@ -23,11 +23,12 @@ pub enum Message {
 impl Application for TimerApp {
     type Message = Message;
     type Executor = iced::executor::Default;
-    type Theme = iced::Theme;
+    type Theme = Theme;
     type Flags = ();
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
         let config = load_config();
+
         (
             TimerApp {
                 elapsed_time: std::time::Duration::from_secs(0),
@@ -76,6 +77,7 @@ impl Application for TimerApp {
                 }
             }
         }
+
         Command::none()
     }
 
@@ -84,47 +86,63 @@ impl Application for TimerApp {
         let seconds = self.elapsed_time.as_secs() % 60;
         let display = format!("{:02}:{:02}", minutes, seconds);
 
-        let time_text = if self.elapsed_time.as_secs() >= self.limit_for_red_color_in_seconds {
-            text(display).size(80).style(iced::Color::from_rgb(1.0, 0.0, 0.0))
-        } else {
-            text(display).size(80).style(iced::Color::from_rgb(0.0, 0.0, 0.0))
-        };
+
+        let time_text = text(display)
+            .size(80)
+            .style(if self.elapsed_time.as_secs() >= self.limit_for_red_color_in_seconds {
+                theme::Text::Color(Color::from_rgb(0.84, 0.16, 0.16))
+            } else {
+                theme::Text::Color(Color::from_rgb(0.12, 0.14, 0.18))
+            });
 
         let time_display = container(time_text)
             .center_x()
             .center_y()
-            .padding(20);
+            .padding([28, 32])
+            .style(theme::Container::Box);
+
+        let status_text = text(if self.is_running { "Status: Running" } else { "Status: Paused" })
+            .size(16)
+            .style(theme::Text::Color(Color::from_rgb(0.38, 0.42, 0.50)));
 
         let start_button = button("Start")
             .on_press(Message::Start)
-            .padding(10)
-            .style(theme::Button::Secondary);
+            .padding(16)
+            .width(Length::Fill)
+            .style(theme::Button::Primary);
 
         let stop_button = button("Stop")
             .on_press(Message::Stop)
-            .padding(10)
+            .padding(16)
+            .width(Length::Fill)
             .style(theme::Button::Secondary);
 
         let reset_button = button("Reset")
             .on_press(Message::Reset)
-            .padding(10)
+            .padding(16)
+            .width(Length::Fill)
             .style(theme::Button::Secondary);
 
         let controls = row![start_button, stop_button, reset_button]
-            .spacing(10)
-            .padding(10)
-            .align_items(Alignment::Center);
-
-        let content = column![time_display, controls]
-            .spacing(20)
+            .spacing(12)
             .align_items(Alignment::Center)
-            .padding(20);
+            .width(Length::Fill);
+
+        let content = column![
+            time_display,
+            status_text,
+            controls,
+        ]
+        .spacing(22)
+        .align_items(Alignment::Center)
+        .padding(24);
 
         container(content)
-            .width(Length::Shrink)
-            .height(Length::Shrink)
+            .width(Length::Fill)
+            .height(Length::Fill)
             .center_x()
             .center_y()
+            .style(theme::Container::Box)
             .into()
     }
 
