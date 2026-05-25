@@ -113,32 +113,6 @@ impl Application for TimerApp {
             .size(12)
             .style(theme::Text::Color(status_color));
 
-        // Progress bar using containers
-        let total_seconds = (self.elapsed_time.as_secs()).max(1) as u16;
-        let progress_percent = (total_seconds % 60).min(60) as u16;
-
-        // Build progress bar with filled and empty portions
-        let filled_width = if progress_percent > 0 {
-            (progress_percent as f32 / 60.0 * 100.0) as u16
-        } else {
-            1
-        };
-
-        let progress_filled = container("")
-            .width(iced::Length::FillPortion(filled_width))
-            .height(iced::Length::Fixed(4.0))
-            .style(theme::Container::Box);
-
-        let empty_portion = (100u16).saturating_sub(filled_width);
-        let progress_empty = container("")
-            .width(iced::Length::FillPortion(empty_portion.max(1)))
-            .height(iced::Length::Fixed(4.0));
-
-        let progress_bar = row![progress_filled, progress_empty]
-            .width(Length::Fill)
-            .height(iced::Length::Fixed(4.0))
-            .spacing(0);
-
         let start_button = button(
             container(text("Start")).width(Length::Fill).center_x()
         )
@@ -171,7 +145,6 @@ impl Application for TimerApp {
         let content = column![
             time_display,
             status_text,
-            progress_bar,
             controls,
         ]
         .spacing(16)
