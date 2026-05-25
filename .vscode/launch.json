@@ -7,10 +7,18 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug Rust",
+            "name": "Debug Rust Binary",
             "cargo": {
                 "args": ["build", "--manifest-path", "${fileDirname}/../Cargo.toml"]
             }
         },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Rust Tests",
+            "cargo": {
+                "args": ["test", "--manifest-path", "${fileDirname}/../Cargo.toml"]
+            }
+        }
     ]
 }
