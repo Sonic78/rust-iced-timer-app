@@ -92,7 +92,7 @@ impl Application for TimerApp {
         let display = format!("{:02}:{:02}", minutes, seconds);
 
         let time_text = text(display)
-            .size(80)
+            .size(72)
             .style(if self.elapsed_time.as_secs() >= self.limit_for_red_color_in_seconds {
                 theme::Text::Color(Color::from_rgb(0.84, 0.16, 0.16))
             } else {
@@ -102,7 +102,7 @@ impl Application for TimerApp {
         let time_display = container(time_text)
             .center_x()
             .center_y()
-            .padding([32, 36])
+            .padding([20, 20])
             .style(theme::Container::Box);
 
         // Status indicator - running dot with color change
@@ -110,7 +110,7 @@ impl Application for TimerApp {
         let status_color = if self.is_running { accent_color } else { text_secondary };
 
         let status_text = text(status_label)
-            .size(14)
+            .size(12)
             .style(theme::Text::Color(status_color));
 
         // Progress bar using containers
@@ -143,7 +143,7 @@ impl Application for TimerApp {
             container(text("Start")).width(Length::Fill).center_x()
         )
             .on_press(Message::Start)
-            .padding(14)
+            .padding(10)
             .width(Length::Fill)
             .style(theme::Button::Primary);
 
@@ -151,7 +151,7 @@ impl Application for TimerApp {
             container(text("Stop")).width(Length::Fill).center_x()
         )
             .on_press(Message::Stop)
-            .padding(14)
+            .padding(10)
             .width(Length::Fill)
             .style(theme::Button::Secondary);
 
@@ -159,12 +159,12 @@ impl Application for TimerApp {
             container(text("Reset")).width(Length::Fill).center_x()
         )
             .on_press(Message::Reset)
-            .padding(14)
+            .padding(10)
             .width(Length::Fill)
             .style(theme::Button::Secondary);
 
         let controls = row![start_button, stop_button, reset_button]
-            .spacing(10)
+            .spacing(8)
             .align_items(Alignment::Center)
             .width(Length::Fill);
 
@@ -174,9 +174,9 @@ impl Application for TimerApp {
             progress_bar,
             controls,
         ]
-        .spacing(20)
+        .spacing(16)
         .align_items(Alignment::Center)
-        .padding(28);
+        .padding(16);
 
         container(content)
             .width(Length::Fill)
