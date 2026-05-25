@@ -82,60 +82,101 @@ impl Application for TimerApp {
     }
 
     fn view(&self) -> Element<'_, Message> {
+        // Color palette - modern teal accent with neutral grays
+        let accent_color = Color::from_rgb(0.06, 0.85, 0.91);
+        let text_primary = Color::from_rgb(0.09, 0.11, 0.15);
+        let text_secondary = Color::from_rgb(0.45, 0.50, 0.62);
+
         let minutes = self.elapsed_time.as_secs() / 60;
         let seconds = self.elapsed_time.as_secs() % 60;
         let display = format!("{:02}:{:02}", minutes, seconds);
-
 
         let time_text = text(display)
             .size(80)
             .style(if self.elapsed_time.as_secs() >= self.limit_for_red_color_in_seconds {
                 theme::Text::Color(Color::from_rgb(0.84, 0.16, 0.16))
             } else {
-                theme::Text::Color(Color::from_rgb(0.12, 0.14, 0.18))
+                theme::Text::Color(text_primary)
             });
 
         let time_display = container(time_text)
             .center_x()
             .center_y()
-            .padding([28, 32])
+            .padding([32, 36])
             .style(theme::Container::Box);
 
-        let status_text = text(if self.is_running { "Status: Running" } else { "Status: Paused" })
-            .size(16)
-            .style(theme::Text::Color(Color::from_rgb(0.38, 0.42, 0.50)));
+        // Status indicator - running dot with color change
+        let status_label = if self.is_running { "● Running" } else { "○ Paused" };
+        let status_color = if self.is_running { accent_color } else { text_secondary };
 
-        let start_button = button("Start")
+        let status_text = text(status_label)
+            .size(14)
+            .style(theme::Text::Color(status_color));
+
+        // Progress bar using containers
+        let total_seconds = (self.elapsed_time.as_secs()).max(1) as u16;
+        let progress_percent = (total_seconds % 60).min(60) as u16;
+
+        // Build progress bar with filled and empty portions
+        let filled_width = if progress_percent > 0 {
+            (progress_percent as f32 / 60.0 * 100.0) as u16
+        } else {
+            1
+        };
+
+        let progress_filled = container("")
+            .width(iced::Length::FillPortion(filled_width))
+            .height(iced::Length::Fixed(4.0))
+            .style(theme::Container::Box);
+
+        let empty_portion = (100u16).saturating_sub(filled_width);
+        let progress_empty = container("")
+            .width(iced::Length::FillPortion(empty_portion.max(1)))
+            .height(iced::Length::Fixed(4.0));
+
+        let progress_bar = row![progress_filled, progress_empty]
+            .width(Length::Fill)
+            .height(iced::Length::Fixed(4.0))
+            .spacing(0);
+
+        let start_button = button(
+            container(text("Start")).width(Length::Fill).center_x()
+        )
             .on_press(Message::Start)
-            .padding(16)
+            .padding(14)
             .width(Length::Fill)
             .style(theme::Button::Primary);
 
-        let stop_button = button("Stop")
+        let stop_button = button(
+            container(text("Stop")).width(Length::Fill).center_x()
+        )
             .on_press(Message::Stop)
-            .padding(16)
+            .padding(14)
             .width(Length::Fill)
             .style(theme::Button::Secondary);
 
-        let reset_button = button("Reset")
+        let reset_button = button(
+            container(text("Reset")).width(Length::Fill).center_x()
+        )
             .on_press(Message::Reset)
-            .padding(16)
+            .padding(14)
             .width(Length::Fill)
             .style(theme::Button::Secondary);
 
         let controls = row![start_button, stop_button, reset_button]
-            .spacing(12)
+            .spacing(10)
             .align_items(Alignment::Center)
             .width(Length::Fill);
 
         let content = column![
             time_display,
             status_text,
+            progress_bar,
             controls,
         ]
-        .spacing(22)
+        .spacing(20)
         .align_items(Alignment::Center)
-        .padding(24);
+        .padding(28);
 
         container(content)
             .width(Length::Fill)
